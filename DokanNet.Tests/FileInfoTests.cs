@@ -1450,14 +1450,14 @@ namespace DokanNet.Tests
 #if LOGONLY
             fixture.SetupAny();
 #else
-            fixture.ExpectCreateFile(path, WriteAccess, WriteShare, FileMode.OpenOrCreate, FileOptions.None);
+        fixture.ExpectCreateFile(path, WriteAccess, WriteShare, FileMode.OpenOrCreate, FileOptions.None);
             fixture.ExpectWriteFile(path, Encoding.UTF8.GetBytes(value), value.Length);
             fixture.ExpectLockUnlockFile(path, 0, value.Length);
 
             fixture.PermitProbeFile(path, Encoding.UTF8.GetBytes(value));
 #endif
 
-            var sut = new FileInfo(fixture.FileName.AsDriveBasedPath());
+        var sut = new FileInfo(fixture.FileName.AsDriveBasedPath());
 
             using (var stream = sut.OpenWrite())
             {
