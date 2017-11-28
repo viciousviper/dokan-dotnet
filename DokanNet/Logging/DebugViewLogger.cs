@@ -7,7 +7,7 @@ namespace DokanNet.Logging
     /// </summary>
     /// <remarks>
     /// To see the output in visual studio 
-    /// Project + Properties, Debug tab, check "Enable unmanaged code debugging".
+    /// Project + %Properties, Debug tab, check "Enable unmanaged code debugging".
     /// </remarks> 
     public class DebugViewLogger : ILogger
     {
@@ -52,7 +52,7 @@ namespace DokanNet.Logging
             WriteMessageToDebugView("fatal", message, args);
         }
 
-        [DllImport("kernel32.dll", CharSet = CharSet.Auto)]
+        [DllImport("kernel32.dll", CharSet = CharSet.Unicode)]
         private static extern void OutputDebugString(string message);
 
         private void WriteMessageToDebugView(string category, string message, params object[] args)

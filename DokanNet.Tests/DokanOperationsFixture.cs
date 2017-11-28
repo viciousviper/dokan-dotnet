@@ -343,7 +343,29 @@ namespace DokanNet.Tests
                 => TryExecute(fileName, buffer, out bytesWritten, offset, info, (string f, byte[] b, out int w, long o, DokanFileInfo i) => Target.WriteFile(f, b, out w, o, i), nameof(WriteFile));
         }
 
-        public const string MOUNT_POINT = "Z:";
+        private static string _mount_point;
+
+        public static string MOUNT_POINT
+        {
+            get
+            {
+                if (string.IsNullOrWhiteSpace(_mount_point))
+                {
+                    var drives = Environment.GetLogicalDrives()
+                        .Select(x => x[0])
+                        .ToArray();
+                    var alphabet = new Stack<char>("ABCDEFGHILMNOPQRSTUVZ");
+
+                    while (alphabet.Any() && string.IsNullOrWhiteSpace(_mount_point))
+                    {
+                        var letter = alphabet.Pop();
+                        if (!drives.Contains(letter))
+                            _mount_point = $@"{letter}:";
+                    }
+                }
+                return _mount_point;
+            }
+        }
 
         public const string VOLUME_LABEL = "Dokan Volume";
 
@@ -359,6 +381,7 @@ namespace DokanNet.Tests
 
         private static Proxy proxy = new Proxy();
 
+        [SuppressMessage("Microsoft.Performance", "CA1823:AvoidUnusedPrivateFields")]
         private string currentTestName;
 
         private Mock<IDokanOperations> operations = new Mock<IDokanOperations>(MockBehavior.Strict);
@@ -493,30 +516,43 @@ namespace DokanNet.Tests
 
         internal static TimeSpan IODelay = TimeSpan.FromSeconds(19);
 
+        [SuppressMessage("Microsoft.Performance", "CA1822:MarkMembersAsStatic")]
         internal string FileName => Named(fileName);
 
+        [SuppressMessage("Microsoft.Performance", "CA1822:MarkMembersAsStatic")]
         internal string DestinationFileName => Named(destinationFileName);
 
+        [SuppressMessage("Microsoft.Performance", "CA1822:MarkMembersAsStatic")]
         internal string DestinationBackupFileName => Named(destinationBackupFileName);
 
+        [SuppressMessage("Microsoft.Performance", "CA1822:MarkMembersAsStatic")]
         internal string DirectoryName => Named(directoryName);
 
+        [SuppressMessage("Microsoft.Performance", "CA1822:MarkMembersAsStatic")]
         internal string Directory2Name => Named(directory2Name);
 
+        [SuppressMessage("Microsoft.Performance", "CA1822:MarkMembersAsStatic")]
         internal string DestinationDirectoryName => Named(destinationDirectoryName);
 
+        [SuppressMessage("Microsoft.Performance", "CA1822:MarkMembersAsStatic")]
         internal string SubDirectoryName => Named(subDirectoryName);
 
+        [SuppressMessage("Microsoft.Performance", "CA1822:MarkMembersAsStatic")]
         internal string SubDirectory2Name => Named(subDirectory2Name);
 
+        [SuppressMessage("Microsoft.Performance", "CA1822:MarkMembersAsStatic")]
         internal string DestinationSubDirectoryName => Named(destinationSubDirectoryName);
 
+        [SuppressMessage("Microsoft.Performance", "CA1822:MarkMembersAsStatic")]
         internal FileInformation[] RootDirectoryItems => Named(rootDirectoryItems);
 
+        [SuppressMessage("Microsoft.Performance", "CA1822:MarkMembersAsStatic")]
         internal FileInformation[] DirectoryItems => Named(directoryItems);
 
+        [SuppressMessage("Microsoft.Performance", "CA1822:MarkMembersAsStatic")]
         internal FileInformation[] Directory2Items => Named(directory2Items);
 
+        [SuppressMessage("Microsoft.Performance", "CA1822:MarkMembersAsStatic")]
         internal FileInformation[] SubDirectoryItems => Named(subDirectoryItems);
 
         [SuppressMessage("Microsoft.Performance", "CA1810:InitializeReferenceTypeStaticFieldsInline")]
@@ -532,8 +568,7 @@ namespace DokanNet.Tests
 
         internal static int NumberOfChunks(long bufferSize, long fileSize)
         {
-            var remainder = default(long);
-            var quotient = Math.DivRem(fileSize, bufferSize, out remainder);
+            var quotient = Math.DivRem(fileSize, bufferSize, out long remainder);
             return (int) quotient + (remainder > 0 ? 1 : 0);
         }
 
@@ -541,7 +576,7 @@ namespace DokanNet.Tests
             => DriveName + RootedPath(fileName);
 
         internal static string RootedPath(string fileName)
-            => Path.DirectorySeparatorChar.ToString(CultureInfo.InvariantCulture) + fileName.TrimStart(Path.DirectorySeparatorChar);
+            => Path.DirectorySeparatorChar + fileName.TrimStart(Path.DirectorySeparatorChar);
 
         internal static void InitInstance(string currentTestName)
         {
@@ -567,18 +602,16 @@ namespace DokanNet.Tests
 
         internal static void InitSecurity()
         {
-            var sid = new SecurityIdentifier(WellKnownSidType.BuiltinUsersSid, null);
+            var sid = WindowsIdentity.GetCurrent();
+            
+            var sidRights = "O:" + sid.User + "G:" + sid.Groups[0];
 
             DefaultDirectorySecurity = new DirectorySecurity();
-            DefaultDirectorySecurity.AddAccessRule(new FileSystemAccessRule(sid,
-                FileSystemRights.Read | FileSystemRights.Traverse, AccessControlType.Allow));
-            DefaultDirectorySecurity.AddAccessRule(new FileSystemAccessRule(sid,
-                FileSystemRights.Write | FileSystemRights.Delete, AccessControlType.Deny));
+            DefaultDirectorySecurity.SetSecurityDescriptorSddlForm(sidRights + "D:PAI(A;OICI;FA;;;AU)");
 
             DefaultFileSecurity = new FileSecurity();
-            DefaultFileSecurity.AddAccessRule(new FileSystemAccessRule(sid, FileSystemRights.Read | FileSystemRights.ExecuteFile, AccessControlType.Allow));
-            DefaultFileSecurity.AddAccessRule(new FileSystemAccessRule(sid, FileSystemRights.Write | FileSystemRights.Delete, AccessControlType.Deny));
-        }
+            DefaultFileSecurity.SetSecurityDescriptorSddlForm(sidRights + "D:AI(A;ID;FA;;;AU)");
+         }
 
         internal static IList<FileInformation> GetEmptyDirectoryDefaultFiles()
             => new[]
@@ -595,7 +628,7 @@ namespace DokanNet.Tests
                 }
             };
 
-        internal IList<FileInformation> RemoveDatesFromFileInformations(IEnumerable<FileInformation> fileInformations)
+        internal static IList<FileInformation> RemoveDatesFromFileInformations(IEnumerable<FileInformation> fileInformations)
         {
             return fileInformations
                 .Select(x => new FileInformation()
@@ -811,6 +844,7 @@ namespace DokanNet.Tests
                     => Trace($"{nameof(IDokanOperations.WriteFile)}[{Interlocked.Read(ref pendingFiles)}] (\"{fileName}\", [{buffer.Length}], out {_bytesWritten}, {offset}, {info.Log()})"));
         }
 
+        [SuppressMessage("Microsoft.Maintainability", "CA1506:AvoidExcessiveClassCoupling")]
         private void PermitMount()
         {
             operations
@@ -893,7 +927,7 @@ namespace DokanNet.Tests
                 .Verifiable();
         }
 
-        private IVerifies SetupGetFileInformationToFail(string path, FileAttributes attributes, NtStatus result, bool? isDirectory = null)
+        private IVerifies SetupGetFileInformationToFail(string path, NtStatus result, bool? isDirectory = null)
         {
             if (result == DokanResult.Success)
                 throw new ArgumentException($"{DokanResult.Success} not supported", nameof(result));
@@ -906,14 +940,14 @@ namespace DokanNet.Tests
                     => Trace($"{nameof(IDokanOperations.GetFileInformation)}[{Interlocked.Read(ref pendingFiles)}] **{result}** (\"{fileName}\", out [{_fileInfo.Log()}], {info.Log()})"));
         }
 
-        internal void PermitGetFileInformationToFail(string path, FileAttributes attributes, NtStatus result, bool? isDirectory = null)
+        internal void PermitGetFileInformationToFail(string path, NtStatus result, bool? isDirectory = null)
         {
-            SetupGetFileInformationToFail(path, attributes, result, isDirectory);
+            SetupGetFileInformationToFail(path, result, isDirectory);
         }
 
-        internal void ExpectGetFileInformationToFail(string path, FileAttributes attributes, NtStatus result, bool? isDirectory = null)
+        internal void ExpectGetFileInformationToFail(string path, NtStatus result, bool? isDirectory = null)
         {
-            SetupGetFileInformationToFail(path, attributes, result, isDirectory).Verifiable();
+            SetupGetFileInformationToFail(path, result, isDirectory).Verifiable();
         }
 
         internal void ExpectFindFiles(string path, IList<FileInformation> fileInfos)
@@ -1027,7 +1061,7 @@ namespace DokanNet.Tests
                 .Verifiable();
         }
 
-        private IVerifies SetupCreateFile(string path, FileAccess access, FileShare share, FileMode mode, FileOptions options = FileOptions.None, FileAttributes attributes = default(FileAttributes), object context = null, bool isDirectory = false, bool deleteOnClose = false)
+        private IVerifies SetupCreateFile(string path, FileAccess access, FileShare share, FileMode mode, FileOptions options = FileOptions.None, FileAttributes attributes = default(FileAttributes), object context = null, bool isDirectory = false)
         {
             return operations
                 .Setup(d => d.CreateFile(path, access, share, mode, options, attributes, It.Is<DokanFileInfo>(i => i.IsDirectory == isDirectory)))
@@ -1040,14 +1074,14 @@ namespace DokanNet.Tests
                     });
         }
 
-        internal void PermitCreateFile(string path, FileAccess access, FileShare share, FileMode mode, FileOptions options = FileOptions.None, FileAttributes attributes = default(FileAttributes), object context = null, bool isDirectory = false, bool deleteOnClose = false)
+        internal void PermitCreateFile(string path, FileAccess access, FileShare share, FileMode mode, FileOptions options = FileOptions.None, FileAttributes attributes = default(FileAttributes), object context = null, bool isDirectory = false)
         {
-            SetupCreateFile(path, access, share, mode, options, attributes, context, isDirectory, deleteOnClose);
+            SetupCreateFile(path, access, share, mode, options, attributes, context, isDirectory);
         }
 
         internal void ExpectCreateFile(string path, FileAccess access, FileShare share, FileMode mode, FileOptions options = FileOptions.None, FileAttributes attributes = default(FileAttributes), object context = null, bool isDirectory = false, bool deleteOnClose = false)
         {
-            SetupCreateFile(path, access, share, mode, options, attributes, context, isDirectory, deleteOnClose)
+            SetupCreateFile(path, access, share, mode, options, attributes, context, isDirectory)
                 .Verifiable();
 
             PermitGetFileInformation(path, FileAttributes.Normal);

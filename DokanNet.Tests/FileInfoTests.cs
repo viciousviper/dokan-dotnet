@@ -49,8 +49,7 @@ namespace DokanNet.Tests
         [TestCleanup]
         public void Cleanup()
         {
-            var hasUnmatchedInvocations = false;
-            DokanOperationsFixture.ClearInstance(out hasUnmatchedInvocations);
+            DokanOperationsFixture.ClearInstance(out bool hasUnmatchedInvocations);
             Assert.IsFalse(hasUnmatchedInvocations, "Found Mock invocations without corresponding setups");
         }
 
@@ -512,9 +511,10 @@ namespace DokanNet.Tests
             fixture.ExpectCreateFile(path, ReadAttributesPermissionsAccess, ReadWriteShare, FileMode.Open);
             fixture.ExpectGetFileInformation(path, FileAttributes.Normal);
             fixture.ExpectGetFileSecurity(path, DokanOperationsFixture.DefaultFileSecurity);
-            fixture.ExpectCreateFile(DokanOperationsFixture.RootName, ReadPermissionsAccess, ReadWriteShare, FileMode.Open);
-            fixture.ExpectGetFileInformation(DokanOperationsFixture.RootName, FileAttributes.Directory);
-            fixture.ExpectGetFileSecurity(DokanOperationsFixture.RootName, DokanOperationsFixture.DefaultDirectorySecurity);
+            //No folder rights requested currently
+            //fixture.ExpectCreateFile(DokanOperationsFixture.RootName, ReadPermissionsAccess, ReadWriteShare, FileMode.Open);
+            //fixture.ExpectGetFileInformation(DokanOperationsFixture.RootName, FileAttributes.Directory);
+            //fixture.ExpectGetFileSecurity(DokanOperationsFixture.RootName, DokanOperationsFixture.DefaultDirectorySecurity);
 #endif
 
             var sut = new FileInfo(fixture.FileName.AsDriveBasedPath());
@@ -543,7 +543,7 @@ namespace DokanNet.Tests
             fixture.ExpectGetFileInformation(path, FileAttributes.Normal);
             fixture.ExpectCreateFile(destinationPath, WriteDirectoryAccess, FileShare.ReadWrite, FileMode.Open);
             fixture.ExpectOpenDirectoryWithoutCleanup(DokanOperationsFixture.RootName, WriteDirectoryAccess, FileShare.ReadWrite);
-            fixture.PermitGetFileInformationToFail(destinationPath, FileAttributes.Normal, DokanResult.FileNotFound, true);
+            fixture.PermitGetFileInformationToFail(destinationPath, DokanResult.FileNotFound, true);
             fixture.PermitOpenDirectory(DokanOperationsFixture.RootName, attributes: FileAttributes.Normal);
             fixture.ExpectMoveFile(path, destinationPath, false);
             fixture.PermitGetFileInformation(destinationPath, FileAttributes.Normal, false);
@@ -575,7 +575,7 @@ namespace DokanNet.Tests
             fixture.ExpectGetFileInformation(path, FileAttributes.Normal);
             fixture.ExpectOpenDirectoryWithoutCleanup(fixture.DestinationDirectoryName.AsRootedPath(), WriteDirectoryAccess, FileShare.ReadWrite);
             fixture.ExpectCreateFile(destinationPath, WriteDirectoryAccess, FileShare.ReadWrite, FileMode.Open);
-            fixture.PermitGetFileInformationToFail(destinationPath, FileAttributes.Normal, DokanResult.FileNotFound);
+            fixture.PermitGetFileInformationToFail(destinationPath, DokanResult.FileNotFound);
             fixture.PermitOpenDirectory(fixture.DestinationDirectoryName.AsRootedPath(), attributes: FileAttributes.Normal);
             fixture.ExpectMoveFile(path, destinationPath, false);
             fixture.PermitGetFileInformation(destinationPath, FileAttributes.Normal, false);
@@ -623,7 +623,7 @@ namespace DokanNet.Tests
             fixture.ExpectGetFileInformation(path, FileAttributes.Normal);
             fixture.ExpectCreateFile(destinationPath, WriteDirectoryAccess, FileShare.ReadWrite, FileMode.Open);
             fixture.ExpectOpenDirectoryWithoutCleanup(fixture.DestinationDirectoryName.AsRootedPath(), WriteDirectoryAccess, FileShare.ReadWrite);
-            fixture.ExpectGetFileInformationToFail(destinationPath, FileAttributes.Normal, DokanResult.FileNotFound);
+            fixture.ExpectGetFileInformationToFail(destinationPath, DokanResult.FileNotFound);
             fixture.ExpectOpenDirectory(DokanOperationsFixture.RootName, attributes: FileAttributes.Normal);
             fixture.ExpectMoveFileToFail(path, destinationPath, false, DokanResult.FileExists);
             fixture.ExpectOpenDirectoryWithoutCleanup(DokanOperationsFixture.RootName, WriteDirectoryAccess, FileShare.ReadWrite);
@@ -1488,7 +1488,7 @@ namespace DokanNet.Tests
 #if LOGONLY
             fixture.SetupAny();
 #else
-            fixture.ExpectCreateFile(destinationPath, ReplaceAccess | FileAccess.Reserved, ReadWriteShare, FileMode.Open);
+            fixture.ExpectCreateFile(destinationPath, ReplaceAccess | FileAccess.AccessSystemSecurity, ReadWriteShare, FileMode.Open);
             fixture.ExpectCreateFileWithoutCleanup(destinationPath, ReplaceAccess, ReadWriteShare, FileMode.Open);
             fixture.ExpectCreateFileWithoutCleanup(path, SetOwnershipAccess, WriteShare, FileMode.Open, FileOptions.None);
             fixture.ExpectGetFileInformation(destinationPath, FileAttributes.Normal);
@@ -1497,7 +1497,7 @@ namespace DokanNet.Tests
             fixture.ExpectSetFileTime(path);
             fixture.ExpectGetVolumeInformation(DokanOperationsFixture.VOLUME_LABEL, DokanOperationsFixture.FILESYSTEM_NAME);
             fixture.ExpectFindStreams(destinationPath, new FileInformation[0]);
-            fixture.PermitGetFileInformationToFail(destinationBackupPath, FileAttributes.Normal, NtStatus.ObjectPathNotFound, true);
+            fixture.PermitGetFileInformationToFail(destinationBackupPath, NtStatus.ObjectPathNotFound, true);
             fixture.PermitOpenDirectory(DokanOperationsFixture.RootName, ReadDirectoryAccess, ReadWriteShare, attributes: FileAttributes.Normal);
             fixture.ExpectCreateFile(destinationBackupPath, WriteDirectoryAccess, FileShare.ReadWrite, FileMode.Open);
             fixture.ExpectOpenDirectoryWithoutCleanup(DokanOperationsFixture.RootName, WriteDirectoryAccess, FileShare.ReadWrite);
@@ -1531,7 +1531,7 @@ namespace DokanNet.Tests
 #if LOGONLY
             fixture.SetupAny();
 #else
-            fixture.ExpectCreateFile(destinationPath, ReplaceAccess | FileAccess.Reserved, ReadWriteShare, FileMode.Open);
+            fixture.ExpectCreateFile(destinationPath, ReplaceAccess | FileAccess.AccessSystemSecurity, ReadWriteShare, FileMode.Open);
             fixture.ExpectCreateFileWithoutCleanup(destinationPath, ReplaceAccess, ReadWriteShare, FileMode.Open);
             fixture.ExpectCreateFileWithoutCleanup(path, SetOwnershipAccess, WriteShare, FileMode.Open, FileOptions.None);
             fixture.ExpectGetFileInformation(destinationPath, FileAttributes.Normal);
@@ -1540,7 +1540,7 @@ namespace DokanNet.Tests
             fixture.ExpectSetFileTime(path);
             fixture.ExpectGetVolumeInformation(DokanOperationsFixture.VOLUME_LABEL, DokanOperationsFixture.FILESYSTEM_NAME);
             fixture.ExpectFindStreams(destinationPath, new FileInformation[0]);
-            fixture.PermitGetFileInformationToFail(destinationBackupPath, FileAttributes.Normal, NtStatus.ObjectPathNotFound, true);
+            fixture.PermitGetFileInformationToFail(destinationBackupPath, NtStatus.ObjectPathNotFound, true);
             fixture.PermitOpenDirectory(fixture.DestinationDirectoryName.AsRootedPath(), ReadDirectoryAccess, ReadWriteShare, attributes: FileAttributes.Normal);
             fixture.ExpectCreateFile(destinationBackupPath, WriteDirectoryAccess, FileShare.ReadWrite, FileMode.Open);
             fixture.ExpectOpenDirectoryWithoutCleanup(fixture.DestinationDirectoryName.AsRootedPath(), WriteDirectoryAccess, FileShare.ReadWrite);
