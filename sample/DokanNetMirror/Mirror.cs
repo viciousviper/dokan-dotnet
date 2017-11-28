@@ -71,7 +71,7 @@ namespace DokanNetMirror
         public NtStatus CreateFile(string fileName, FileAccess access, FileShare share, FileMode mode,
             FileOptions options, FileAttributes attributes, DokanFileInfo info)
         {
-            NtStatus result = NtStatus.Success;
+            var result = NtStatus.Success;
             var filePath = GetPath(fileName);
 
             if (info.IsDirectory)
@@ -99,7 +99,7 @@ namespace DokanNetMirror
                             }
 
                             new DirectoryInfo(filePath).EnumerateFileSystemInfos().Any();
-                                // you can't list the directory
+                            // you can't list the directory
                             break;
 
                         case FileMode.CreateNew:
@@ -150,8 +150,8 @@ namespace DokanNetMirror
 
                         if (pathExists)
                         {
+                            // check if driver only wants to read attributes, security info, or open directory
                             if (readWriteAttributes || pathIsDirectory)
-                                // check if driver only wants to read attributes, security info, or open directory
                             {
                                 if (pathIsDirectory && (access & FileAccess.Delete) == FileAccess.Delete
                                     && (access & FileAccess.Synchronize) != FileAccess.Synchronize)
@@ -193,7 +193,7 @@ namespace DokanNetMirror
                         readAccess ? System.IO.FileAccess.Read : System.IO.FileAccess.ReadWrite, share, 4096, options);
 
                     if (pathExists && (mode == FileMode.OpenOrCreate
-                        || mode == FileMode.Create))
+                                       || mode == FileMode.Create))
                         result = DokanResult.AlreadyExists;
 
                     if (mode == FileMode.CreateNew || mode == FileMode.Create) //Files are always created as Archive
@@ -212,7 +212,7 @@ namespace DokanNetMirror
                 }
                 catch (Exception ex)
                 {
-                    var hr = (uint) Marshal.GetHRForException(ex);
+                    var hr = (uint)Marshal.GetHRForException(ex);
                     switch (hr)
                     {
                         case 0x80070020: //Sharing violation
@@ -261,7 +261,7 @@ namespace DokanNetMirror
             (info.Context as FileStream)?.Dispose();
             info.Context = null;
             Trace(nameof(CloseFile), fileName, info, DokanResult.Success);
-                // could recreate cleanup code here but this is not called sometimes
+            // could recreate cleanup code here but this is not called sometimes
         }
 
         public NtStatus ReadFile(string fileName, byte[] buffer, out int bytesRead, long offset, DokanFileInfo info)
@@ -316,7 +316,7 @@ namespace DokanNetMirror
         {
             try
             {
-                ((FileStream) (info.Context)).Flush();
+                ((FileStream)(info.Context)).Flush();
                 return Trace(nameof(FlushFileBuffers), fileName, info, DokanResult.Success);
             }
             catch (IOException)
@@ -358,7 +358,10 @@ namespace DokanNetMirror
         {
             try
             {
-                File.SetAttributes(GetPath(fileName), attributes);
+                // MS-FSCC 2.6 File Attributes : There is no file attribute with the value 0x00000000
+                // because a value of 0x00000000 in the FileAttributes field means that the file attributes for this file MUST NOT be changed when setting basic information for the file
+                if (attributes != 0)
+                    File.SetAttributes(GetPath(fileName), attributes);
                 return Trace(nameof(SetFileAttributes), fileName, info, DokanResult.Success, attributes.ToString());
             }
             catch (UnauthorizedAccessException)
@@ -380,7 +383,18 @@ namespace DokanNetMirror
         {
             try
             {
+                if (info.Context is FileStream stream)
+                {
+                    var ct = creationTime?.ToFileTime() ?? 0;
+                    var lat = lastAccessTime?.ToFileTime() ?? 0;
+                    var lwt = lastWriteTime?.ToFileTime() ?? 0;
+                    if (NativeMethods.SetFileTime(stream.SafeFileHandle, ref ct, ref lat, ref lwt))
+                        return NtStatus.Success;
+                    throw Marshal.GetExceptionForHR(Marshal.GetLastWin32Error());
+                }
+
                 var filePath = GetPath(fileName);
+
                 if (creationTime.HasValue)
                     File.SetCreationTime(filePath, creationTime.Value);
 
@@ -481,7 +495,7 @@ namespace DokanNetMirror
         {
             try
             {
-                ((FileStream) (info.Context)).SetLength(length);
+                ((FileStream)(info.Context)).SetLength(length);
                 return Trace(nameof(SetEndOfFile), fileName, info, DokanResult.Success,
                     length.ToString(CultureInfo.InvariantCulture));
             }
@@ -496,7 +510,7 @@ namespace DokanNetMirror
         {
             try
             {
-                ((FileStream) (info.Context)).SetLength(length);
+                ((FileStream)(info.Context)).SetLength(length);
                 return Trace(nameof(SetAllocationSize), fileName, info, DokanResult.Success,
                     length.ToString(CultureInfo.InvariantCulture));
             }
@@ -509,9 +523,10 @@ namespace DokanNetMirror
 
         public NtStatus LockFile(string fileName, long offset, long length, DokanFileInfo info)
         {
+#if !NETCOREAPP1_0
             try
             {
-                ((FileStream) (info.Context)).Lock(offset, length);
+                ((FileStream)(info.Context)).Lock(offset, length);
                 return Trace(nameof(LockFile), fileName, info, DokanResult.Success,
                     offset.ToString(CultureInfo.InvariantCulture), length.ToString(CultureInfo.InvariantCulture));
             }
@@ -520,13 +535,18 @@ namespace DokanNetMirror
                 return Trace(nameof(LockFile), fileName, info, DokanResult.AccessDenied,
                     offset.ToString(CultureInfo.InvariantCulture), length.ToString(CultureInfo.InvariantCulture));
             }
+#else
+// .NET Core 1.0 do not have support for FileStream.Lock
+            return NtStatus.NotImplemented;
+#endif
         }
 
         public NtStatus UnlockFile(string fileName, long offset, long length, DokanFileInfo info)
         {
+#if !NETCOREAPP1_0
             try
             {
-                ((FileStream) (info.Context)).Unlock(offset, length);
+                ((FileStream)(info.Context)).Unlock(offset, length);
                 return Trace(nameof(UnlockFile), fileName, info, DokanResult.Success,
                     offset.ToString(CultureInfo.InvariantCulture), length.ToString(CultureInfo.InvariantCulture));
             }
@@ -535,17 +555,21 @@ namespace DokanNetMirror
                 return Trace(nameof(UnlockFile), fileName, info, DokanResult.AccessDenied,
                     offset.ToString(CultureInfo.InvariantCulture), length.ToString(CultureInfo.InvariantCulture));
             }
+#else
+// .NET Core 1.0 do not have support for FileStream.Unlock
+            return NtStatus.NotImplemented;
+#endif
         }
 
-        public NtStatus GetDiskFreeSpace(out long free, out long total, out long used, DokanFileInfo info)
+        public NtStatus GetDiskFreeSpace(out long freeBytesAvailable, out long totalNumberOfBytes, out long totalNumberOfFreeBytes, DokanFileInfo info)
         {
-            var dinfo = DriveInfo.GetDrives().Single(di => di.RootDirectory.Name == Path.GetPathRoot(path + "\\"));
+            var dinfo = DriveInfo.GetDrives().Single(di => string.Equals(di.RootDirectory.Name, Path.GetPathRoot(path + "\\"), StringComparison.OrdinalIgnoreCase));
 
-            used = dinfo.AvailableFreeSpace;
-            total = dinfo.TotalSize;
-            free = dinfo.TotalFreeSpace;
-            return Trace(nameof(GetDiskFreeSpace), null, info, DokanResult.Success, "out " + free.ToString(),
-                "out " + total.ToString(), "out " + used.ToString());
+            freeBytesAvailable = dinfo.TotalFreeSpace;
+            totalNumberOfBytes = dinfo.TotalSize;
+            totalNumberOfFreeBytes = dinfo.AvailableFreeSpace;
+            return Trace(nameof(GetDiskFreeSpace), null, info, DokanResult.Success, "out " + freeBytesAvailable.ToString(),
+                "out " + totalNumberOfBytes.ToString(), "out " + totalNumberOfFreeBytes.ToString());
         }
 
         public NtStatus GetVolumeInformation(out string volumeLabel, out FileSystemFeatures features,
@@ -565,10 +589,11 @@ namespace DokanNetMirror
         public NtStatus GetFileSecurity(string fileName, out FileSystemSecurity security, AccessControlSections sections,
             DokanFileInfo info)
         {
+#if !NETCOREAPP1_0
             try
             {
                 security = info.IsDirectory
-                    ? (FileSystemSecurity) Directory.GetAccessControl(GetPath(fileName))
+                    ? (FileSystemSecurity)Directory.GetAccessControl(GetPath(fileName))
                     : File.GetAccessControl(GetPath(fileName));
                 return Trace(nameof(GetFileSecurity), fileName, info, DokanResult.Success, sections.ToString());
             }
@@ -577,20 +602,26 @@ namespace DokanNetMirror
                 security = null;
                 return Trace(nameof(GetFileSecurity), fileName, info, DokanResult.AccessDenied, sections.ToString());
             }
+#else
+// .NET Core 1.0 do not have support for Directory.GetAccessControl
+            security = null;
+            return NtStatus.NotImplemented;
+#endif
         }
 
         public NtStatus SetFileSecurity(string fileName, FileSystemSecurity security, AccessControlSections sections,
             DokanFileInfo info)
         {
+#if !NETCOREAPP1_0
             try
             {
                 if (info.IsDirectory)
                 {
-                    Directory.SetAccessControl(GetPath(fileName), (DirectorySecurity) security);
+                    Directory.SetAccessControl(GetPath(fileName), (DirectorySecurity)security);
                 }
                 else
                 {
-                    File.SetAccessControl(GetPath(fileName), (FileSecurity) security);
+                    File.SetAccessControl(GetPath(fileName), (FileSecurity)security);
                 }
                 return Trace(nameof(SetFileSecurity), fileName, info, DokanResult.Success, sections.ToString());
             }
@@ -598,6 +629,10 @@ namespace DokanNetMirror
             {
                 return Trace(nameof(SetFileSecurity), fileName, info, DokanResult.AccessDenied, sections.ToString());
             }
+#else
+// .NET Core 1.0 do not have support for Directory.SetAccessControl
+            return NtStatus.NotImplemented;
+#endif
         }
 
         public NtStatus Mounted(DokanFileInfo info)
@@ -628,7 +663,8 @@ namespace DokanNetMirror
         public IList<FileInformation> FindFilesHelper(string fileName, string searchPattern)
         {
             IList<FileInformation> files = new DirectoryInfo(GetPath(fileName))
-                .GetFileSystemInfos(searchPattern)
+                .EnumerateFileSystemInfos()
+                .Where(finfo => DokanHelper.DokanIsNameInExpression(searchPattern, finfo.Name, true))
                 .Select(finfo => new FileInformation
                 {
                     Attributes = finfo.Attributes,

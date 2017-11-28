@@ -6,10 +6,15 @@ namespace DokanNet
     /// <summary>
     /// Dokan mount options used to describe dokan device behavior. 
     /// </summary>
+    /// \if PRIVATE
     /// <seealso cref="DOKAN_OPTIONS.Options"/>
+    /// \endif
     [Flags]
     public enum DokanOptions : long
     {
+        /// <summary>Fixed Drive.</summary>
+        FixedDrive = 0,
+
         /// <summary>Enable output debug message.</summary>
         DebugMode = 1,
 
@@ -34,10 +39,7 @@ namespace DokanNet
         /// <summary>Mount the drive on current session only.</summary>
         CurrentSession = 128,
 
-        /// <summary>Enable Lockfile/Unlockfile operations. Otherwise Dokan will take care of it</summary>
-        UserModeLock = 256,
-
-        /// <summary>Fixed Driver</summary>
-        FixedDrive = 0
+        /// <summary>Enable Lockfile/Unlockfile operations.</summary>
+        UserModeLock = 256
     }
 }
