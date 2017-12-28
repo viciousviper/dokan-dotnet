@@ -1,6 +1,9 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 
+/// <summary>
+/// Namespace for structures and classes related to native API.
+/// </summary>
 namespace DokanNet.Native
 {
     /// <summary>
@@ -26,7 +29,7 @@ namespace DokanNet.Native
         /// </summary>
         /// <param name="driveLetter">Dokan driver letter to unmount.</param>
         /// <returns><c>True</c> if device was unmount or <c>false</c> in case of failure or device not found.</returns>
-        [DllImport(DOKAN_DLL, ExactSpelling = true, CharSet = CharSet.Auto)]
+        [DllImport(DOKAN_DLL, ExactSpelling = true, CharSet = CharSet.Unicode)]
         public static extern bool DokanUnmount(char driveLetter);
 
         /// <summary>
@@ -51,7 +54,7 @@ namespace DokanNet.Native
         /// <param name="mountPoint">MountPoint Mount point to unmount ("<c>Z</c>", 
         /// "<c>Z:</c>", "<c>Z:\\</c>", "<c>Z:\MyMountPoint</c>").</param>
         /// <returns><c>True</c> if device was unmount or <c>false</c> in case of failure or device not found.</returns>
-        [DllImport(DOKAN_DLL, ExactSpelling = true, CharSet = CharSet.Auto)]
+        [DllImport(DOKAN_DLL, ExactSpelling = true, CharSet = CharSet.Unicode)]
         public static extern bool DokanRemoveMountPoint([MarshalAs(UnmanagedType.LPWStr)] string mountPoint);
 
         /// <summary>
@@ -67,7 +70,7 @@ namespace DokanNet.Native
         /// <summary>
         /// Get the handle to Access Token.
         /// This method needs be called in <see cref="IDokanOperations.CreateFile"/> callback.
-        /// The caller must call <a href="https://msdn.microsoft.com/en-us/library/windows/desktop/ms724211(v=vs.85).aspx">CloseHandle</a> for the returned handle.
+        /// The caller must call <a href="https://msdn.microsoft.com/en-us/library/windows/desktop/ms724211(v=vs.85).aspx">CloseHandle (MSDN)</a> for the returned handle.
         /// </summary>
         /// <param name="rawFileInfo">
         /// A <see cref="DokanFileInfo"/> of the operation to extend.
@@ -81,17 +84,21 @@ namespace DokanNet.Native
         /// <summary>
         /// Convert <see cref="DokanOperationProxy.ZwCreateFileDelegate"/> parameters to <see cref="IDokanOperations.CreateFile"/> parameters.
         /// </summary>
+        /// <param name="desiredAccess">DesiredAccess from <see cref="DokanOperationProxy.ZwCreateFileDelegate"/>.</param>
         /// <param name="fileAttributes">FileAttributes from <see cref="DokanOperationProxy.ZwCreateFileDelegate"/>.</param>
         /// <param name="createOptions">CreateOptions from <see cref="DokanOperationProxy.ZwCreateFileDelegate"/>.</param>
         /// <param name="createDisposition">CreateDisposition from <see cref="DokanOperationProxy.ZwCreateFileDelegate"/>.</param>
-        /// <param name="outFileAttributesAndFlags">New <a href="https://msdn.microsoft.com/en-us/library/windows/desktop/aa363858(v=vs.85).aspx">CreateFile</a> dwFlagsAndAttributes.</param>
-        /// <param name="outCreationDisposition">New <a href="https://msdn.microsoft.com/en-us/library/windows/desktop/aa363858(v=vs.85).aspx">CreateFile</a> dwCreationDisposition.</param>
+        /// <param name="outDesiredAccess">New <a href="https://msdn.microsoft.com/en-us/library/windows/desktop/aa363858(v=vs.85).aspx">CreateFile (MSDN)</a> dwDesiredAccess.</param>
+        /// <param name="outFileAttributesAndFlags">New <a href="https://msdn.microsoft.com/en-us/library/windows/desktop/aa363858(v=vs.85).aspx">CreateFile (MSDN)</a> dwFlagsAndAttributes.</param>
+        /// <param name="outCreationDisposition">New <a href="https://msdn.microsoft.com/en-us/library/windows/desktop/aa363858(v=vs.85).aspx">CreateFile (MSDN)</a> dwCreationDisposition.</param>
         /// \see <a href="https://msdn.microsoft.com/en-us/library/windows/desktop/aa363858(v=vs.85).aspx">CreateFile function (MSDN)</a>
         [DllImport(DOKAN_DLL, ExactSpelling = true)]
         public static extern void DokanMapKernelToUserCreateFileFlags(
+            uint desiredAccess,
             uint fileAttributes,
             uint createOptions,
             uint createDisposition,
+            ref uint outDesiredAccess,
             ref int outFileAttributesAndFlags,
             ref int outCreationDisposition);
 

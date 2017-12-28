@@ -132,8 +132,7 @@ namespace DokanNet.Tests
 
             internal static int NumberOfChunks(long bufferSize, long fileSize)
             {
-                var remainder = default(long);
-                var quotient = Math.DivRem(fileSize, bufferSize, out remainder);
+                var quotient = Math.DivRem(fileSize, bufferSize, out long remainder);
                 return (int) quotient + (remainder > 0 ? 1 : 0);
             }
 
@@ -261,8 +260,7 @@ namespace DokanNet.Tests
         [TestCleanup]
         public void Cleanup()
         {
-            var hasUnmatchedInvocations = false;
-            DokanOperationsFixture.ClearInstance(out hasUnmatchedInvocations);
+            DokanOperationsFixture.ClearInstance(out bool hasUnmatchedInvocations);
             Assert.IsFalse(hasUnmatchedInvocations, "Found Mock invocations without corresponding setups");
         }
 
@@ -377,7 +375,7 @@ namespace DokanNet.Tests
             fixture.ExpectSetAllocationSize(path, testData.Length);
             fixture.ExpectSetEndOfFile(path, testData.Length);
 #if NETWORK_DRIVE
-            fixture.SetupWriteFileInChunks(path, testData, bufferSize, context: testData, synchronousIo: false);
+            fixture.ExpectWriteFileInChunks(path, testData, bufferSize, context: testData, synchronousIo: false);
 #else
             fixture.ExpectWriteFileInChunks(path, testData, bufferSize, context: testData);
 #endif
