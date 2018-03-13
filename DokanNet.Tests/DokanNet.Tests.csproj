@@ -8,7 +8,7 @@
     <Version>1.1.1.0</Version>
     <AssemblyVersion>1.1.1.0</AssemblyVersion>
     <FileVersion>1.1.1.0</FileVersion>
-    <TargetFrameworks>net4.7</TargetFrameworks>
+    <TargetFrameworks>net4.6;net4.7</TargetFrameworks>
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{3AC096D0-A1C2-E12C-1390-A8335801FDAB};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
     <CLSCompliant>True</CLSCompliant>
@@ -34,6 +34,10 @@
 
   <ItemGroup>
     <ProjectReference Include="..\DokanNet\DokanNet.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Service Include="{82a7f48d-3b50-4b1e-b82e-3ada8210c358}" />
   </ItemGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Release'">
