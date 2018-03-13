@@ -62,6 +62,8 @@ namespace DokanNet.Tests
 #if LOGONLY
             fixture.SetupAny();
 #else
+            fixture.ExpectOpenDirectory(DokanOperationsFixture.RootName, attributes: FileAttributes.Normal);
+            fixture.ExpectFindFilesWithPattern(DokanOperationsFixture.RootName, fixture.FileName, Array.Empty<FileInformation>());
             fixture.ExpectCreateFile(path, ReadWriteAccess, WriteShare, FileMode.Create, FileOptions.None, context: context);
             fixture.ExpectWriteFile(path, Encoding.UTF8.GetBytes(value), value.Length, context: context);
 
@@ -189,6 +191,14 @@ namespace DokanNet.Tests
 #if LOGONLY
             fixture.SetupAny();
 #else
+            fixture.ExpectOpenDirectory(DokanOperationsFixture.RootName, attributes: FileAttributes.Normal);
+            fixture.ExpectFindFilesWithPattern(DokanOperationsFixture.RootName, fixture.FileName, new[] {
+                new FileInformation() {
+                    FileName = fixture.FileName, Attributes = FileAttributes.Normal,
+                    Length = 100,
+                    CreationTime = DateTime.Today, LastWriteTime = DateTime.Today, LastAccessTime = DateTime.Today
+                }
+            });
             fixture.ExpectCreateFile(path, WriteAccess, WriteShare, FileMode.OpenOrCreate, FileOptions.None, context: context);
             fixture.ExpectWriteFile(path, Encoding.UTF8.GetBytes(value), value.Length, context: context);
 
@@ -217,6 +227,14 @@ namespace DokanNet.Tests
 #if LOGONLY
             fixture.SetupAny();
 #else
+            fixture.ExpectOpenDirectory(DokanOperationsFixture.RootName, attributes: FileAttributes.Normal);
+            fixture.ExpectFindFilesWithPattern(DokanOperationsFixture.RootName, fixture.FileName, new[] {
+                new FileInformation() {
+                    FileName = fixture.FileName, Attributes = FileAttributes.Normal,
+                    Length = 100,
+                    CreationTime = DateTime.Today, LastWriteTime = DateTime.Today, LastAccessTime = DateTime.Today
+                }
+            });
             fixture.ExpectCreateFile(path, WriteAccess, WriteShare, FileMode.OpenOrCreate, FileOptions.None, context: context);
             fixture.ExpectWriteFileInChunks(path, largeData, FILE_BUFFER_SIZE, context: context);
 
@@ -253,6 +271,14 @@ namespace DokanNet.Tests
 #if LOGONLY
             fixture.SetupAny();
 #else
+            fixture.ExpectOpenDirectory(DokanOperationsFixture.RootName, attributes: FileAttributes.Normal);
+            fixture.ExpectFindFilesWithPattern(DokanOperationsFixture.RootName, fixture.FileName, new[] {
+                new FileInformation() {
+                    FileName = fixture.FileName, Attributes = FileAttributes.Normal,
+                    Length = 100,
+                    CreationTime = DateTime.Today, LastWriteTime = DateTime.Today, LastAccessTime = DateTime.Today
+                }
+            });
             fixture.ExpectCreateFile(path, WriteAccess, WriteShare, FileMode.OpenOrCreate, FileOptions.None, context: context);
             fixture.ExpectWriteFileInChunks(path, largeData, FILE_BUFFER_SIZE, context: context);
 

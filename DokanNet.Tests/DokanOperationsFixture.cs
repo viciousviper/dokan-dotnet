@@ -605,19 +605,18 @@ namespace DokanNet.Tests
         internal static void InitSecurity()
         {
             var sid = WindowsIdentity.GetCurrent();
-            
-            var sidRights = "O:" + sid.User + "G:" + sid.Groups[0];
+
+            var sidRights = $"O:{sid.User}G:{sid.Groups[0]}";
 
             DefaultDirectorySecurity = new DirectorySecurity();
-            DefaultDirectorySecurity.SetSecurityDescriptorSddlForm(sidRights + "D:PAI(A;OICI;FA;;;AU)");
+            DefaultDirectorySecurity.SetSecurityDescriptorSddlForm($"{sidRights}D:PAI(A;OICI;FA;;;AU)");
 
             DefaultFileSecurity = new FileSecurity();
-            DefaultFileSecurity.SetSecurityDescriptorSddlForm(sidRights + "D:AI(A;ID;FA;;;AU)");
-         }
+            DefaultFileSecurity.SetSecurityDescriptorSddlForm($"{sidRights}D:AI(A;ID;FA;;;AU)");
+        }
 
         internal static IList<FileInformation> GetEmptyDirectoryDefaultFiles()
-            => new[]
-            {
+            => new[] {
                 new FileInformation()
                 {
                     FileName = ".", Attributes = FileAttributes.Directory,
@@ -630,9 +629,9 @@ namespace DokanNet.Tests
                 }
             };
 
-        internal static IList<FileInformation> RemoveDatesFromFileInformations(IEnumerable<FileInformation> fileInformations)
+        internal static IList<FileInformation> RemoveDatesFromFileInformationItems(IEnumerable<FileInformation> fileInformationItems)
         {
-            return fileInformations
+            return fileInformationItems
                 .Select(x => new FileInformation()
                 {
                     FileName = x.FileName, Attributes = x.Attributes,

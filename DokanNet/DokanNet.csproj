@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netstandard1.3;net4.6;net4.0</TargetFrameworks>
+    <TargetFrameworks>net4.0;net4.5;net4.6;net4.7;netstandard1.3;netstandard1.6</TargetFrameworks>
     <AssemblyName>DokanNet</AssemblyName>
     <RootNamespace>DokanNet</RootNamespace>
     <Description>A user mode file system for windows. 
@@ -9,7 +9,7 @@
 This is a .NET wrapper over Dokan, and allows you to create your own file systems in Windows.</Description>
     <Copyright>Copyright (C) 2017</Copyright>
     <Version>1.1.1.0</Version>
-    <AssemblyVersion>1.1.0.3</AssemblyVersion>
+    <AssemblyVersion>1.1.1.0</AssemblyVersion>
     <FileVersion>1.1.1.0</FileVersion>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <Company>MaximeC</Company>
@@ -46,7 +46,7 @@ This is a .NET wrapper over Dokan, and allows you to create your own file system
     </EmbeddedResource>
   </ItemGroup>
   
-  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard1.3'">
+  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard1.3' OR '$(TargetFramework)' == 'netstandard1.6'">
     <PackageReference Include="System.Diagnostics.Contracts" Version="4.3.0" />
     <PackageReference Include="System.Diagnostics.TraceSource" Version="4.3.0" />
     <PackageReference Include="System.IO.FileSystem.AccessControl" Version="4.3.0" />
@@ -54,7 +54,7 @@ This is a .NET wrapper over Dokan, and allows you to create your own file system
     <PackageReference Include="System.Security.Principal.Windows" Version="4.3.0" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(TargetFramework)' == 'net4.0'">
+  <ItemGroup Condition="'$(TargetFramework)' == 'net4.0' OR '$(TargetFramework)' == 'net4.5'">
     <PackageReference Include="StringInterpolationBridgeStrong" Version="0.9.1" />
   </ItemGroup>
 

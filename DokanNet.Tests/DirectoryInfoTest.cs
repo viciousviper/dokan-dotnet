@@ -173,6 +173,8 @@ namespace DokanNet.Tests
             fixture.SetupAny();
 #else
             fixture.ExpectCreateFileToFail(path.AsRootedPath(), DokanResult.PathNotFound);
+            fixture.ExpectOpenDirectory(DokanOperationsFixture.RootName, attributes: FileAttributes.Normal);
+            fixture.ExpectFindFilesWithPattern(DokanOperationsFixture.RootName, fixture.DirectoryName, Array.Empty<FileInformation>());
             fixture.ExpectCreateDirectory(path.AsRootedPath());
 #endif
 
@@ -217,12 +219,11 @@ namespace DokanNet.Tests
 #else
             fixture.ExpectCreateFile(path.AsRootedPath(), ReadAttributesAccess, ReadWriteShare, FileMode.Open);
             fixture.ExpectGetFileInformation(path.AsRootedPath(), FileAttributes.Normal);
-            fixture.ExpectOpenDirectory(DokanOperationsFixture.RootName, FileAccess.Synchronize, FileShare.None);
-            fixture.ExpectFindFiles(DokanOperationsFixture.RootName, new[]
-            {
+            fixture.ExpectOpenDirectory(DokanOperationsFixture.RootName, attributes: FileAttributes.Normal);
+            fixture.ExpectFindFilesWithPattern(DokanOperationsFixture.RootName, fixture.DirectoryName, new[] {
                 new FileInformation()
                 {
-                    FileName = path, Attributes = FileAttributes.Normal,
+                    FileName = fixture.DirectoryName, Attributes = FileAttributes.Normal,
                     Length = 0,
                     CreationTime = DateTime.Today, LastWriteTime = DateTime.Today, LastAccessTime = DateTime.Today
                 }
@@ -246,7 +247,8 @@ namespace DokanNet.Tests
 #else
             fixture.ExpectCreateFileToFail(path.AsRootedPath(), DokanResult.FileNotFound);
             fixture.ExpectCreateFile(basePath.AsRootedPath(), ReadAttributesAccess, ReadWriteShare, FileMode.Open);
-            fixture.ExpectGetFileInformation(basePath.AsRootedPath(), FileAttributes.Directory);
+            fixture.ExpectOpenDirectory(basePath.AsRootedPath(), attributes: FileAttributes.Normal);
+            fixture.ExpectFindFilesWithPattern(basePath.AsRootedPath(), fixture.SubDirectoryName, Array.Empty<FileInformation>());
             fixture.ExpectCreateDirectory(path.AsRootedPath());
 #endif
 
@@ -307,6 +309,15 @@ namespace DokanNet.Tests
             fixture.ExpectGetFileInformation(path.AsRootedPath(), FileAttributes.Normal);
             fixture.ExpectCreateFile(basePath.AsRootedPath(), ReadAttributesAccess, ReadWriteShare, FileMode.Open);
             fixture.ExpectGetFileInformation(basePath.AsRootedPath(), FileAttributes.Directory);
+            fixture.ExpectOpenDirectory(basePath.AsRootedPath(), attributes: FileAttributes.Normal);
+            fixture.ExpectFindFilesWithPattern(basePath.AsRootedPath(), fixture.SubDirectoryName, new[] {
+                new FileInformation()
+                {
+                    FileName = fixture.SubDirectoryName, Attributes = FileAttributes.Normal,
+                    Length = 0,
+                    CreationTime = DateTime.Today, LastWriteTime = DateTime.Today, LastAccessTime = DateTime.Today
+                }
+            });
             fixture.ExpectCreateDirectoryToFail(path.AsRootedPath(), DokanResult.FileExists);
 #endif
 
@@ -324,7 +335,6 @@ namespace DokanNet.Tests
             fixture.SetupAny();
 #else
             fixture.ExpectCreateFile(path, ReadAttributesAccess, ReadWriteShare, FileMode.Open);
-            fixture.ExpectGetFileInformation(path, FileAttributes.Directory);
             fixture.ExpectOpenDirectory(path, DeleteFromDirectoryAccess);
             fixture.ExpectDeleteDirectory(path);
 #endif
@@ -354,7 +364,6 @@ namespace DokanNet.Tests
             fixture.SetupAny();
 #else
             fixture.ExpectCreateFile(path, ReadAttributesAccess, ReadWriteShare, FileMode.Open);
-            fixture.ExpectGetFileInformation(path, FileAttributes.Directory);
             fixture.ExpectOpenDirectory(path);
             if (supportsPatternSearch)
             {
@@ -411,7 +420,6 @@ namespace DokanNet.Tests
             fixture.SetupAny();
 #else
             fixture.ExpectCreateFile(path, ReadAttributesAccess, ReadWriteShare, FileMode.Open);
-            fixture.ExpectGetFileInformation(path, FileAttributes.Directory);
             fixture.ExpectOpenDirectory(path);
             if (supportsPatternSearch)
             {
@@ -447,7 +455,7 @@ namespace DokanNet.Tests
             fixture.ExpectCreateFile(path.AsRootedPath(), ReadAttributesPermissionsAccess, ReadWriteShare, FileMode.Open);
             fixture.ExpectGetFileInformation(path.AsRootedPath(), FileAttributes.Directory);
             fixture.ExpectGetFileSecurity(path.AsRootedPath(), DokanOperationsFixture.DefaultDirectorySecurity);
-            //No folder rights requested currently            
+            //No folder rights requested currently
             //fixture.ExpectCreateFile(DokanOperationsFixture.RootName, ReadPermissionsAccess, ReadWriteShare, FileMode.Open);
             //fixture.ExpectGetFileInformation(DokanOperationsFixture.RootName, FileAttributes.Directory);
             //fixture.ExpectGetFileSecurity(DokanOperationsFixture.RootName,
@@ -747,7 +755,7 @@ namespace DokanNet.Tests
 #else
             fixture.ExpectOpenDirectory(path);
             //Remove all dates
-            var files = DokanOperationsFixture.RemoveDatesFromFileInformations(fixture.DirectoryItems);
+            var files = DokanOperationsFixture.RemoveDatesFromFileInformationItems(fixture.DirectoryItems);
 
             if (supportsPatternSearch)
             {
@@ -1093,7 +1101,6 @@ namespace DokanNet.Tests
             fixture.SetupAny();
 #else
             fixture.ExpectCreateFile(path.AsRootedPath(), ChangePermissionsAccess, ReadWriteShare, FileMode.Open);
-            fixture.ExpectGetFileInformation(path.AsRootedPath(), FileAttributes.Directory);
             fixture.ExpectGetFileSecurity(path.AsRootedPath(), DokanOperationsFixture.DefaultDirectorySecurity);
             fixture.ExpectOpenDirectory(path.AsRootedPath(), share: FileShare.ReadWrite);
             if (supportsPatternSearch)
