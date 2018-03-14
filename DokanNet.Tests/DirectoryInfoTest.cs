@@ -236,6 +236,9 @@ namespace DokanNet.Tests
 #else
             fixture.ExpectCreateFileToFail(path.AsRootedPath(), DokanResult.FileNotFound);
             fixture.ExpectCreateFile(basePath.AsRootedPath(), ReadAttributesAccess, ReadWriteShare, FileMode.Open);
+            // *** QUIRK: A call to CreateDirectory on the baseDir does not make sense
+            fixture.PermitCreateDirectory(basePath.AsRootedPath());
+            // ** END QUIRK
             fixture.ExpectCreateDirectory(path.AsRootedPath());
 #endif
 
