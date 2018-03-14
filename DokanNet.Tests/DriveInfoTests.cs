@@ -29,7 +29,7 @@ namespace DokanNet.Tests
             var fixture = DokanOperationsFixture.Instance;
 
 #if LOGONLY
-            fixture.SetupAny();
+            fixture.PermitAny();
 #else
             var availableFreeSpace = 1 << 10;
             fixture.ExpectGetDiskFreeSpace(freeBytesAvailable: availableFreeSpace);
@@ -52,7 +52,7 @@ namespace DokanNet.Tests
             var fixture = DokanOperationsFixture.Instance;
 
 #if LOGONLY
-            fixture.SetupAny();
+            fixture.PermitAny();
 #else
             fixture.ExpectOpenDirectory(DokanOperationsFixture.RootName, FileAccess.Synchronize, FileShare.ReadWrite);
             fixture.ExpectGetVolumeInformation(DokanOperationsFixture.VOLUME_LABEL, DokanOperationsFixture.FILESYSTEM_NAME);
@@ -89,7 +89,7 @@ namespace DokanNet.Tests
 
             var path = DokanOperationsFixture.RootName;
 #if LOGONLY
-            fixture.SetupAny();
+            fixture.PermitAny();
 #else
             var anyDateTime = new DateTime(2000, 1, 1, 12, 0, 0);
             fixture.ExpectCreateFile(path, ReadAttributesAccess, ReadWriteShare, FileMode.Open);
@@ -121,7 +121,7 @@ namespace DokanNet.Tests
             var path = DokanOperationsFixture.RootName.AsDriveBasedPath();
 
 #if LOGONLY
-            fixture.SetupAny();
+            fixture.PermitAny();
 #endif
 
             var sut = new DriveInfo(DokanOperationsFixture.MOUNT_POINT);
@@ -140,7 +140,7 @@ namespace DokanNet.Tests
             var fixture = DokanOperationsFixture.Instance;
 
 #if LOGONLY
-            fixture.SetupAny();
+            fixture.PermitAny();
 #else
             var totalFreeSpace = 1 << 14;
             fixture.ExpectGetDiskFreeSpace(totalNumberOfFreeBytes: totalFreeSpace);
@@ -163,7 +163,7 @@ namespace DokanNet.Tests
             var fixture = DokanOperationsFixture.Instance;
 
 #if LOGONLY
-            fixture.SetupAny();
+            fixture.PermitAny();
 #else
             var totalSize = 1 << 20;
             fixture.ExpectGetDiskFreeSpace(totalNumberOfBytes: totalSize);
@@ -186,7 +186,7 @@ namespace DokanNet.Tests
             var fixture = DokanOperationsFixture.Instance;
 
 #if LOGONLY
-            fixture.SetupAny();
+            fixture.PermitAny();
 #else
             fixture.ExpectOpenDirectory(DokanOperationsFixture.RootName, FileAccess.Synchronize, FileShare.ReadWrite);
             fixture.ExpectGetVolumeInformation(DokanOperationsFixture.VOLUME_LABEL, DokanOperationsFixture.FILESYSTEM_NAME);
